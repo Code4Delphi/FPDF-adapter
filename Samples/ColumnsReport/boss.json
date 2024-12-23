@@ -1,0 +1,11 @@
+{
+	"name": "ColumnsReport",
+	"description": "",
+	"version": "1.0.0",
+	"homepage": "",
+	"mainsrc": "./src",
+	"projects": [],
+	"dependencies": {
+		"https://github.com/projeto-acbr-oficial/fpdf-pascal": "^1.1.0"
+	}
+}
