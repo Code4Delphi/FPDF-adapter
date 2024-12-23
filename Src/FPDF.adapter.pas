@@ -17,6 +17,7 @@ type
 
   IFPDFAdapter = interface
     ['{9BD5DF0F-5187-4F80-9B7C-9FE6682B1A31}']
+    function Parent: TFPDFExt;
     function OnHeader(APDFAdapter: TFPDFAdapterEvent): IFPDFAdapter;
     function OnFooter(APDFAdapter: TFPDFAdapterEvent): IFPDFAdapter;
     function SetFont(const AFamily: string; const AStyle: string; ASize: Double): IFPDFAdapter; overload;
@@ -49,6 +50,7 @@ type
     procedure SetDefaultValues;
     procedure ConfDirectories;
   protected
+    function Parent: TFPDFExt;
     function OnHeader(APDFAdapter: TFPDFAdapterEvent): IFPDFAdapter;
     function OnFooter(APDFAdapter: TFPDFAdapterEvent): IFPDFAdapter;
     function SetFont(const AFamily: string; const AStyle: string; ASize: Double): IFPDFAdapter; overload;
@@ -99,8 +101,8 @@ end;
 
 procedure TFPDFAdapter.ConfPDFOnCreate;
 begin
-  //FPDF.OnHeader := OnHeader;
-  //FPDF.OnFooter := OnFooter;
+  FPDF.OnHeader := PrintHeader;
+  FPDF.OnFooter := PrintFooter;
   FPDF.SetCompression(True);
   Self.SetFont('Arial', '', 10);
 end;
@@ -109,6 +111,11 @@ procedure TFPDFAdapter.SetDefaultValues;
 begin
   FOpenAfterGenerating := True;
   FPageTitle := 'Relatório';
+end;
+
+function TFPDFAdapter.Parent: TFPDFExt;
+begin
+  Result := FPDF;
 end;
 
 function TFPDFAdapter.OnHeader(APDFAdapter: TFPDFAdapterEvent): IFPDFAdapter;
