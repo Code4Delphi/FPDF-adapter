@@ -60,7 +60,7 @@ begin
     .Font(8)
     .CellRight(0, 3, Format('Total orç.: %d', [114]));
 
-  Self.AddTitle;
+  //Self.AddTitle;
 
   Fy0 := FFPDFAdapter.Parent.GetY();
 end;
@@ -100,7 +100,9 @@ begin
     // Go back to first column
     Self.SetCol(0);
     // Page break
-    Result := True;
+    Result := False;
+
+    FFPDFAdapter.AddPage();
   end;
 end;
 
@@ -110,7 +112,7 @@ var
 begin
   // Set position at a given column
   FColCurrent := ACol;
-  LX := ACol * FColWidth + FColMarginLeft; //65 (FColWidth + 5)
+  LX := FColMarginLeft + ACol * FColWidth; //65 (FColWidth + 5)
   FFPDFAdapter.Parent.SetLeftMargin(LX);
   FFPDFAdapter.Parent.SetX(LX);
 end;
@@ -119,23 +121,25 @@ procedure TColumnsReport.Gerar;
 var
   LMarginTotal: Double;
 begin
-  FFPDFAdapter := TFPDFAdapter.New
-    .OnHeader(PrintHeader)
-    .OnFooter(PrintFooter)
-    .OnAcceptPageBreak(AcceptPageBreak);
-
-  FColCurrent := 0;
   FColNumber := 2;
   FColMarginLeft := 12;
-  LMarginTotal := (Pred(FColNumber) * FColMarginLeft) + 10; //FFPDFAdapter.Parent.rMargin_;
+  LMarginTotal := (Pred(FColNumber) * FColMarginLeft) + 10; //Self.rMargin;
+  //FColWidth := (Self.GetPageWidth - LMarginTotal) / FColNumber;
+  FColCurrent := 0;
+
+  FFPDFAdapter := TFPDFAdapter.New
+    //.OnHeader(PrintHeader)
+    //.OnFooter(PrintFooter)
+    .OnAcceptPageBreak(AcceptPageBreak)
+    ;
+
   FColWidth := (FFPDFAdapter.Parent.GetPageWidth - LMarginTotal) / FColNumber;
   //FColWidth := Trunc(FColWidth);
 
-  FFPDFAdapter.AddPage;
-
+  //FFPDFAdapter.AddPage();
   Self.AddTxtColumns;
   //Self.PreencherDados;
-  //FFPDFAdapter.Ln();
+  FFPDFAdapter.Ln();
   FFPDFAdapter.Generate;
 end;
 
@@ -190,10 +194,20 @@ procedure TColumnsReport.AddTxtColumns;
 var
   LTxt: string;
 begin
-  FFPDFAdapter.Ln();
+  FFPDFAdapter.AddPage();
 
+  // Title
+  FFPDFAdapter.Font('Arial', '', 12);
+  FFPDFAdapter.Parent.SetFillColor(200, 220, 255);
+  FFPDFAdapter.Cell(0, 6, 'Chapter : ', '0', 1, 'L', true);
+  FFPDFAdapter.Ln(4);
+  // Save ordinate
+  Fy0 := FFPDFAdapter.Parent.GetY();
+
+  //**
   LTxt := Self.TxtGrande;
   FFPDFAdapter.Font('Times', '', 12);
+  // Output text in a 6 cm width column
   FFPDFAdapter.Parent.MultiCell(FColWidth, 5, LTxt);
   FFPDFAdapter.Ln();
 
@@ -202,6 +216,21 @@ begin
   // Go back to first column
   Self.SetCol(0);
 end;
+
+//var
+//  LTxt: string;
+//begin
+//  LTxt := Self.TxtGrande;
+//  FFPDFAdapter.Font('Times', '', 12);
+//  // Output text in a 6 cm width column
+//  FFPDFAdapter.Parent.MultiCell(FColWidth, 5, LTxt);
+//  FFPDFAdapter.Ln();
+//
+//  FFPDFAdapter.Font('I');
+//  FFPDFAdapter.Cell(0, 5, '(end of excerpt)');
+//  // Go back to first column
+//  Self.SetCol(0);
+//end;
 
 function TColumnsReport.TxtGrande: string;
 begin
