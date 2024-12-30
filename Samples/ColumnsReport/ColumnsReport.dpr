@@ -61,6 +61,8 @@ begin
     .CellRight(0, 3, Format('Total orç.: %d', [114]));
 
   Self.AddTitle;
+
+  Fy0 := FFPDFAdapter.Parent.GetY();
 end;
 
 procedure TColumnsReport.PrintFooter(APDFAdapter: IFPDFAdapter);
@@ -91,14 +93,14 @@ begin
     // Set ordinate to top
     FFPDFAdapter.Parent.SetY(Fy0);
     // Keep on page
-    Result := false;
+    Result := False;
   end
   else
   begin
     // Go back to first column
     Self.SetCol(0);
     // Page break
-    Result := true;
+    Result := True;
   end;
 end;
 
@@ -113,7 +115,6 @@ begin
   FFPDFAdapter.Parent.SetX(LX);
 end;
 
-
 procedure TColumnsReport.Gerar;
 var
   LMarginTotal: Double;
@@ -124,7 +125,7 @@ begin
     .OnAcceptPageBreak(AcceptPageBreak);
 
   FColCurrent := 0;
-  FColNumber := 3;
+  FColNumber := 2;
   FColMarginLeft := 12;
   LMarginTotal := (Pred(FColNumber) * FColMarginLeft) + 10; //FFPDFAdapter.Parent.rMargin_;
   FColWidth := (FFPDFAdapter.Parent.GetPageWidth - LMarginTotal) / FColNumber;
@@ -139,11 +140,11 @@ procedure TColumnsReport.PreencherDados;
 var
   LNumOrcamento: Integer;
 begin
-  for LNumOrcamento := 1 to 15 do
+  for LNumOrcamento := 1 to 150 do
   begin
     Self.PreencherDadosOrcamento(LNumOrcamento);
     Self.PreencherDadosOrcamentoItens(LNumOrcamento);
-    Self.PreencherTotaisOrcamento;
+    //Self.PreencherTotaisOrcamento;
   end;
 end;
 
@@ -155,7 +156,6 @@ begin
 
   LTxt := Self.TxtGrande;
   FFPDFAdapter.Font('Times', '', 12);
-  // Output text in a 6 cm width column
   FFPDFAdapter.Parent.MultiCell(FColWidth, 5, LTxt);
   FFPDFAdapter.Ln();
 
