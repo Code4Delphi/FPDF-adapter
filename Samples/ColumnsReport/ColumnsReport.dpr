@@ -110,7 +110,7 @@ var
 begin
   // Set position at a given column
   FColCurrent := ACol;
-  LX := FColMarginLeft + ACol * FColWidth; //65 (FColWidth + 5)
+  LX := ACol * FColWidth + FColMarginLeft; //65 (FColWidth + 5)
   FFPDFAdapter.Parent.SetLeftMargin(LX);
   FFPDFAdapter.Parent.SetX(LX);
 end;
@@ -129,10 +129,13 @@ begin
   FColMarginLeft := 12;
   LMarginTotal := (Pred(FColNumber) * FColMarginLeft) + 10; //FFPDFAdapter.Parent.rMargin_;
   FColWidth := (FFPDFAdapter.Parent.GetPageWidth - LMarginTotal) / FColNumber;
+  //FColWidth := Trunc(FColWidth);
 
   FFPDFAdapter.AddPage;
-  //Self.AddTxtColumns;
-  Self.PreencherDados;
+
+  Self.AddTxtColumns;
+  //Self.PreencherDados;
+  //FFPDFAdapter.Ln();
   FFPDFAdapter.Generate;
 end;
 
@@ -143,32 +146,18 @@ begin
   for LNumOrcamento := 1 to 150 do
   begin
     Self.PreencherDadosOrcamento(LNumOrcamento);
-    Self.PreencherDadosOrcamentoItens(LNumOrcamento);
+    //Self.PreencherDadosOrcamentoItens(LNumOrcamento);
     //Self.PreencherTotaisOrcamento;
   end;
 end;
 
-procedure TColumnsReport.AddTxtColumns;
-var
-  LTxt: string;
-begin
-  FFPDFAdapter.Ln();
-
-  LTxt := Self.TxtGrande;
-  FFPDFAdapter.Font('Times', '', 12);
-  FFPDFAdapter.Parent.MultiCell(FColWidth, 5, LTxt);
-  FFPDFAdapter.Ln();
-
-  FFPDFAdapter.Font('I');
-  FFPDFAdapter.Cell(0, 5, '(end of excerpt)');
-  // Go back to first column
-  Self.SetCol(0);
-end;
-
 procedure TColumnsReport.PreencherDadosOrcamento(const ANumOrcamento: Integer);
 begin
-  FFPDFAdapter.Ln.BoldON
-    .Cell(95, 4, Format('%s  %s %d', [FormatFloat('000000', ANumOrcamento), 'Cliente nome teste ', ANumOrcamento]), '1');
+//  FFPDFAdapter.Ln.BoldON
+//    .Cell(95, 4, Format('%s  %s %d', [FormatFloat('000000', ANumOrcamento), 'Cliente nome teste ', ANumOrcamento]), '1');
+
+  FFPDFAdapter.BoldON
+    .Parent.MultiCell(95, 5, Format('%s  %s %d', [FormatFloat('000000', ANumOrcamento), 'Cliente nome teste ', ANumOrcamento]), '1');
 end;
 
 procedure TColumnsReport.PreencherDadosOrcamentoItens(const ANumOrcamento: Integer);
@@ -195,6 +184,23 @@ procedure TColumnsReport.PreencherTotaisOrcamento;
 begin
   FFPDFAdapter.BoldOn.Ln
     .Cell(95, 4, Format('%s', [FormatFloat(',,0.00', FTotalOrc)]), '1', 0, 'R');
+end;
+
+procedure TColumnsReport.AddTxtColumns;
+var
+  LTxt: string;
+begin
+  FFPDFAdapter.Ln();
+
+  LTxt := Self.TxtGrande;
+  FFPDFAdapter.Font('Times', '', 12);
+  FFPDFAdapter.Parent.MultiCell(FColWidth, 5, LTxt);
+  FFPDFAdapter.Ln();
+
+  FFPDFAdapter.Font('I');
+  FFPDFAdapter.Cell(0, 5, '(end of excerpt)');
+  // Go back to first column
+  Self.SetCol(0);
 end;
 
 function TColumnsReport.TxtGrande: string;
