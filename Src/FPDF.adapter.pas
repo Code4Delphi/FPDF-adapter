@@ -13,13 +13,16 @@ uses
 type
   IFPDFAdapter = interface;
 
+  TFPDFChild = class;
   TFPDFAdapterEvent = procedure (APDFAdapter: IFPDFAdapter) of object;
+  TFPDFAcceptPageBreak = function : Boolean of object;
 
   IFPDFAdapter = interface
     ['{9BD5DF0F-5187-4F80-9B7C-9FE6682B1A31}']
-    function Parent: TFPDFExt;
+    function Parent: TFPDFChild;
     function OnHeader(APDFAdapter: TFPDFAdapterEvent): IFPDFAdapter;
     function OnFooter(APDFAdapter: TFPDFAdapterEvent): IFPDFAdapter;
+    function OnAcceptPageBreak(AFunc: TFPDFAcceptPageBreak): IFPDFAdapter;
     function AddPage: IFPDFAdapter;
     function Font(const AFamily: string; const AStyle: string; ASize: Double): IFPDFAdapter; overload;
     function Font(const AStyle: string): IFPDFAdapter; overload;
@@ -35,9 +38,22 @@ type
     procedure Generate;
   end;
 
+  TFPDFChild = class(TFPDFExt)
+  private
+    FOnAcceptPageBreak: TFPDFAcceptPageBreak;
+  public
+//    function lMargin_: Double;
+//    function tMargin_: Double;
+//    function rMargin_: Double;
+//    function bMargin_: Double;
+//    function cMargin_: Double;
+    function AcceptPageBreak: Boolean; override;
+    procedure OnAcceptPageBreak(AFunc: TFPDFAcceptPageBreak);
+  end;
+
   TFPDFAdapter = class(TInterfacedObject, IFPDFAdapter)
   private
-    FPDF: TFPDFExt;
+    FPDF: TFPDFChild;
     FDirFilePDF: string;
     FPathFilePDF: string;
     FPageTitle: string;
@@ -53,9 +69,10 @@ type
     procedure SetDefaultValues;
     procedure ConfDirectories;
   protected
-    function Parent: TFPDFExt;
+    function Parent: TFPDFChild;
     function OnHeader(APDFAdapter: TFPDFAdapterEvent): IFPDFAdapter;
     function OnFooter(APDFAdapter: TFPDFAdapterEvent): IFPDFAdapter;
+    function OnAcceptPageBreak(AFunc: TFPDFAcceptPageBreak): IFPDFAdapter;
     function AddPage: IFPDFAdapter;
     function Font(const AFamily: string; const AStyle: string; ASize: Double): IFPDFAdapter; overload;
     function Font(const AStyle: string): IFPDFAdapter; overload;
@@ -77,6 +94,47 @@ type
 
 implementation
 
+{ TFPDFChild }
+
+function TFPDFChild.AcceptPageBreak: Boolean;
+begin
+  if Assigned(FOnAcceptPageBreak) then
+    FOnAcceptPageBreak
+  else
+    inherited AcceptPageBreak;
+end;
+
+//function TFPDFChild.lMargin_: Double;
+//begin
+//  Result := Self.lMargin;
+//end;
+//
+//function TFPDFChild.tMargin_: Double;
+//begin
+//  Result := Self.tMargin;
+//end;
+//
+//function TFPDFChild.rMargin_: Double;
+//begin
+//  Result := Self.rMargin;
+//end;
+//
+//function TFPDFChild.bMargin_: Double;
+//begin
+//  Result := Self.bMargin;
+//end;
+//
+//function TFPDFChild.cMargin_: Double;
+//begin
+//  Result := Self.cMargin;
+//end;
+
+procedure TFPDFChild.OnAcceptPageBreak(AFunc: TFPDFAcceptPageBreak);
+begin
+  FOnAcceptPageBreak := AFunc;
+end;
+
+{ TFPDFAdapter }
 class function TFPDFAdapter.New: IFPDFAdapter;
 begin
   Result := Self.Create;
@@ -84,7 +142,7 @@ end;
 
 constructor TFPDFAdapter.Create;
 begin
-  FPDF := TFPDFExt.Create;
+  FPDF := TFPDFChild.Create;
   Self.SetDefaultValues;
   Self.ConfDirectories;
   Self.ConfPDFOnCreate;
@@ -124,7 +182,7 @@ begin
   FPageTitle := 'Relatório';
 end;
 
-function TFPDFAdapter.Parent: TFPDFExt;
+function TFPDFAdapter.Parent: TFPDFChild;
 begin
   Result := FPDF;
 end;
@@ -139,6 +197,12 @@ function TFPDFAdapter.OnFooter(APDFAdapter: TFPDFAdapterEvent): IFPDFAdapter;
 begin
   Result := Self;
   FOnFooter := APDFAdapter;
+end;
+
+function TFPDFAdapter.OnAcceptPageBreak(AFunc: TFPDFAcceptPageBreak): IFPDFAdapter;
+begin
+  Result := Self;
+  FPDF.OnAcceptPageBreak(AFunc);
 end;
 
 procedure TFPDFAdapter.PrintHeader(APDF: TFPDF);
@@ -217,7 +281,7 @@ end;
 procedure TFPDFAdapter.Generate;
 begin
   Self.Ln.BoldON;
-  FPDF.Cell(95, 4, Format('%s  %s %d', [FormatFloat('000000', 10), 'Cliente nome teste ', 10]), '1');
+  //FPDF.Cell(95, 4, Format('%s  %s %d', [FormatFloat('000000', 10), 'Cliente nome teste ', 10]), '1');
 
   FPDF.SaveToFile(FPathFilePDF);
 

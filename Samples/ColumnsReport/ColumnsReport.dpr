@@ -12,14 +12,23 @@ type
   TColumnsReport = class
   private
     FFPDFAdapter: IFPDFAdapter;
+    FColNumber: Integer;
+    FColWidth: Double;
+    FColCurrent: Double;
+    FColMarginLeft: Double;
+    Fy0: Double;
     FTotalOrc: Double;
     procedure PrintHeader(APDFAdapter: IFPDFAdapter);
     procedure PrintFooter(APDFAdapter: IFPDFAdapter);
+    function AcceptPageBreak: Boolean;
     procedure AddTitle;
     procedure PreencherDados;
     procedure PreencherDadosOrcamento(const ANumOrcamento: Integer);
     procedure PreencherDadosOrcamentoItens(const ANumOrcamento: Integer);
     procedure PreencherTotaisOrcamento;
+    procedure SetCol(const Acol: Double);
+    procedure AddTxtColumns;
+    function TxtGrande: string;
   public
     procedure Gerar;
   end;
@@ -72,13 +81,56 @@ begin
     .Cell(0, 5, Format('%s     %s', [TEXTO, TEXTO]), 'B');
 end;
 
+function TColumnsReport.AcceptPageBreak: Boolean;
+begin
+  // Method accepting or not automatic page break
+  if FColCurrent < Pred(FColNumber) then
+  begin
+    // Go to next column
+    Self.SetCol(FColCurrent + 1);
+    // Set ordinate to top
+    FFPDFAdapter.Parent.SetY(Fy0);
+    // Keep on page
+    Result := false;
+  end
+  else
+  begin
+    // Go back to first column
+    Self.SetCol(0);
+    // Page break
+    Result := true;
+  end;
+end;
+
+procedure TColumnsReport.SetCol(const Acol: Double);
+var
+  LX: Double;
+begin
+  // Set position at a given column
+  FColCurrent := ACol;
+  LX := FColMarginLeft + ACol * FColWidth; //65 (FColWidth + 5)
+  FFPDFAdapter.Parent.SetLeftMargin(LX);
+  FFPDFAdapter.Parent.SetX(LX);
+end;
+
+
 procedure TColumnsReport.Gerar;
+var
+  LMarginTotal: Double;
 begin
   FFPDFAdapter := TFPDFAdapter.New
     .OnHeader(PrintHeader)
-    .OnFooter(PrintFooter);
+    .OnFooter(PrintFooter)
+    .OnAcceptPageBreak(AcceptPageBreak);
+
+  FColCurrent := 0;
+  FColNumber := 3;
+  FColMarginLeft := 12;
+  LMarginTotal := (Pred(FColNumber) * FColMarginLeft) + 10; //FFPDFAdapter.Parent.rMargin_;
+  FColWidth := (FFPDFAdapter.Parent.GetPageWidth - LMarginTotal) / FColNumber;
 
   FFPDFAdapter.AddPage;
+  //Self.AddTxtColumns;
   Self.PreencherDados;
   FFPDFAdapter.Generate;
 end;
@@ -93,6 +145,24 @@ begin
     Self.PreencherDadosOrcamentoItens(LNumOrcamento);
     Self.PreencherTotaisOrcamento;
   end;
+end;
+
+procedure TColumnsReport.AddTxtColumns;
+var
+  LTxt: string;
+begin
+  FFPDFAdapter.Ln();
+
+  LTxt := Self.TxtGrande;
+  FFPDFAdapter.Font('Times', '', 12);
+  // Output text in a 6 cm width column
+  FFPDFAdapter.Parent.MultiCell(FColWidth, 5, LTxt);
+  FFPDFAdapter.Ln();
+
+  FFPDFAdapter.Font('I');
+  FFPDFAdapter.Cell(0, 5, '(end of excerpt)');
+  // Go back to first column
+  Self.SetCol(0);
 end;
 
 procedure TColumnsReport.PreencherDadosOrcamento(const ANumOrcamento: Integer);
@@ -113,7 +183,7 @@ begin
 
     FFPDFAdapter.Ln
       .Cell(12, 4, Format('%s', [FormatFloat('000000', LNumItem)]), 'BLR')
-      .Cell(54, 4, Format('%s %d', ['Produto teste ', LNumItem]), '1')
+      .Cell(54, 4, Format('Teste produto orçamento %d item %d', [ANumOrcamento, LNumItem]), '1')
       .Cell(12, 4, Format('%d', [LNumItem]), 'BLR', 0, 'R')
       .Cell(17, 4, Format('%s', [FormatFloat(',,0.00', LTotal)]), 'BLR', 0, 'R');
 
@@ -126,6 +196,28 @@ begin
   FFPDFAdapter.BoldOn.Ln
     .Cell(95, 4, Format('%s', [FormatFloat(',,0.00', FTotalOrc)]), '1', 0, 'R');
 end;
+
+function TColumnsReport.TxtGrande: string;
+begin
+  Result :=
+  '''
+  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam elit nisi, ultrices ut nulla eget, mattis volutpat tortor. Sed a libero ornare, ultrices leo sit amet, condimentum enim.
+  Quisque a fringilla purus. In semper mauris augue, id aliquam libero vestibulum sed. Nullam porttitor quam mi, ut gravida libero aliquet sed. Sed convallis mi et pellentesque tincidunt.
+  Phasellus sem eros, pharetra nec tincidunt vel, sagittis ac nibh. Nam lorem massa, congue nec tempor tincidunt, elementum scelerisque nisi.
+
+  Vestibulum fringilla pretium ultrices. Curabitur gravida tempus nunc, nec semper magna euismod ac. Integer molestie, nunc eu sodales iaculis, augue risus elementum libero, a sagittis
+  turpis nibh sed mi. Maecenas lobortis metus quis maximus ullamcorper. Integer fermentum mollis egestas. Duis tristique congue sem ac faucibus. Etiam sed nulla nec ante faucibus faucibus.
+  Aliquam in felis quis lacus maximus efficitur.
+
+  Aenean lobortis libero metus, tempor fringilla ligula rhoncus placerat. Nullam ut maximus metus, sit amet tincidunt elit. Vivamus nec nisi scelerisque, suscipit quam eu, iaculis enim.
+  Integer vulputate eros magna, in sagittis elit eleifend eu. Curabitur non dui ut nulla aliquet mollis. Phasellus et turpis nec tortor elementum efficitur sit amet eget diam. Nunc non orci
+  placerat, placerat arcu scelerisque, maximus quam. Vestibulum et nunc et justo ullamcorper bibendum. Nunc ac eros id turpis suscipit fermentum ac lobortis ipsum. Suspendisse potenti.
+  Proin ac ipsum elit. Proin semper justo non bibendum efficitur. Cras gravida felis orci, non commodo enim porttitor quis. Suspendisse ut fermentum nulla.
+  ''';
+
+  Result := Result + Result + Result;
+end;
+
 
 {CONSOLE}
 begin
