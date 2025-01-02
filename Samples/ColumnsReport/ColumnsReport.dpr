@@ -14,8 +14,9 @@ type
     FFPDFAdapter: IFPDFAdapter;
     FColNumber: Integer;
     FColWidth: Double;
-    FColCurrent: Double;
-    FColMarginLeft: Double;
+    FColCurrent: Integer;
+    FMarginLeft: Double;
+    FMarginBetweenCol: Double;
     Fy0: Double;
     FTotalOrc: Double;
     procedure PrintHeader(APDFAdapter: IFPDFAdapter);
@@ -26,7 +27,7 @@ type
     procedure PreencherDadosOrcamento(const ANumOrcamento: Integer);
     procedure PreencherDadosOrcamentoItens(const ANumOrcamento: Integer);
     procedure PreencherTotaisOrcamento;
-    procedure SetCol(const Acol: Double);
+    procedure SetCol(const ACol: Integer);
     procedure AddTxtColumns;
     function TxtGrande: string;
   public
@@ -38,6 +39,9 @@ var
 
 procedure TColumnsReport.PrintHeader(APDFAdapter: IFPDFAdapter);
 begin
+  FFPDFAdapter.Parent.SetLeftMargin(FMarginLeft);
+  FFPDFAdapter.Parent.SetX(FMarginLeft);
+
   APDFAdapter
     .Cell(0, 13, '', 'TB')
     .Ln(1)
@@ -60,17 +64,20 @@ begin
     .Font(8)
     .CellRight(0, 3, Format('Total orç.: %d', [114]));
 
-  //Self.AddTitle;
+  Self.AddTitle;
 
-  Fy0 := FFPDFAdapter.Parent.GetY();
+  //FFPDFAdapter.Ln(5);
+  Fy0 := FFPDFAdapter.Parent.GetY;
+  //FFPDFAdapter.Parent.SetX(0);
 end;
 
 procedure TColumnsReport.PrintFooter(APDFAdapter: IFPDFAdapter);
 begin
-  APDFAdapter.Parent.SetY(-15);
+  //APDFAdapter.Parent.SetY(-15);
+  APDFAdapter.Parent.SetY(0);
   APDFAdapter.Font('Arial','I',8);
   APDFAdapter.Parent.SetTextColor(128);
-  APDFAdapter.Cell( 0, 10, 'Page '+IntToStr(APDFAdapter.PageNo()), '0', 0, 'C');
+  APDFAdapter.Cell(0, 10, 'Page '+IntToStr(APDFAdapter.PageNo()), '0', 0, 'C');
 end;
 
 procedure TColumnsReport.AddTitle;
@@ -81,91 +88,26 @@ begin
     .Ln(4)
     .BoldOn
     .Cell(0, 5, Format('%s     %s', [TEXTO, TEXTO]), 'B');
-end;
 
-function TColumnsReport.AcceptPageBreak: Boolean;
-begin
-  Result := False;
-
-  // Method accepting or not automatic page break
-  if FColCurrent < Pred(FColNumber) then
-  begin
-    // Go to next column
-    Self.SetCol(FColCurrent + 1);
-    // Set ordinate to top
-    FFPDFAdapter.Parent.SetY(Fy0);
-    // Keep on page
-    //Result := False;
-  end
-  else
-  begin
-    //**
-    FFPDFAdapter.AddPage();
-    //**
-
-    // Go back to first column
-    Self.SetCol(0);
-    // Page break
-    //Result := True
-  end;
-end;
-
-procedure TColumnsReport.SetCol(const Acol: Double);
-var
-  LX: Double;
-begin
-  // Set position at a given column
-  FColCurrent := ACol;
-  LX := FColMarginLeft + ACol * FColWidth; //65 (FColWidth + 5)
-  FFPDFAdapter.Parent.SetLeftMargin(LX);
-  FFPDFAdapter.Parent.SetX(LX);
-end;
-
-procedure TColumnsReport.Gerar;
-var
-  LMarginTotal: Double;
-begin
-  FColNumber := 2;
-  FColMarginLeft := 12;
-  LMarginTotal := (Pred(FColNumber) * FColMarginLeft) + 10; //Self.rMargin;
-  //FColWidth := (Self.GetPageWidth - LMarginTotal) / FColNumber;
-  FColCurrent := 0;
-
-  FFPDFAdapter := TFPDFAdapter.New
-    //.OnHeader(PrintHeader)
-    //.OnFooter(PrintFooter)
-    .OnAcceptPageBreak(AcceptPageBreak)
-    ;
-
-  FColWidth := (FFPDFAdapter.Parent.GetPageWidth - LMarginTotal) / FColNumber;
-  //FColWidth := Trunc(FColWidth);
-
-  //FFPDFAdapter.AddPage();
-  Self.AddTxtColumns;
-  //Self.PreencherDados;
-  FFPDFAdapter.Ln();
-  FFPDFAdapter.Generate;
+  FFPDFAdapter.Ln(5);
 end;
 
 procedure TColumnsReport.PreencherDados;
 var
   LNumOrcamento: Integer;
 begin
-  for LNumOrcamento := 1 to 150 do
+  for LNumOrcamento := 1 to 20 do
   begin
     Self.PreencherDadosOrcamento(LNumOrcamento);
-    //Self.PreencherDadosOrcamentoItens(LNumOrcamento);
+    Self.PreencherDadosOrcamentoItens(LNumOrcamento);
     //Self.PreencherTotaisOrcamento;
   end;
 end;
 
 procedure TColumnsReport.PreencherDadosOrcamento(const ANumOrcamento: Integer);
 begin
-//  FFPDFAdapter.Ln.BoldON
-//    .Cell(95, 4, Format('%s  %s %d', [FormatFloat('000000', ANumOrcamento), 'Cliente nome teste ', ANumOrcamento]), '1');
-
   FFPDFAdapter.BoldON
-    .Parent.MultiCell(95, 5, Format('%s  %s %d', [FormatFloat('000000', ANumOrcamento), 'Cliente nome teste ', ANumOrcamento]), '1');
+    .Parent.MultiCell(94, 5, Format('%s - Cliente nome teste: %d', [FormatFloat('000000', ANumOrcamento), ANumOrcamento]), '1');
 end;
 
 procedure TColumnsReport.PreencherDadosOrcamentoItens(const ANumOrcamento: Integer);
@@ -178,11 +120,12 @@ begin
   begin
     LTotal := LNumItem * 10;
 
-    FFPDFAdapter.Ln
+    FFPDFAdapter
       .Cell(12, 4, Format('%s', [FormatFloat('000000', LNumItem)]), 'BLR')
       .Cell(54, 4, Format('Teste produto orçamento %d item %d', [ANumOrcamento, LNumItem]), '1')
-      .Cell(12, 4, Format('%d', [LNumItem]), 'BLR', 0, 'R')
-      .Cell(17, 4, Format('%s', [FormatFloat(',,0.00', LTotal)]), 'BLR', 0, 'R');
+      .Cell(11, 4, Format('%d', [LNumItem]), 'BLR', 0, 'R')
+      .Cell(17, 4, Format('%s', [FormatFloat(',,0.00', LTotal)]), 'BLR', 0, 'R')
+      .Ln;
 
     FTotalOrc := FTotalOrc +  LTotal;
   end;
@@ -198,7 +141,7 @@ procedure TColumnsReport.AddTxtColumns;
 var
   LTxt: string;
 begin
-  FFPDFAdapter.AddPage();
+  FFPDFAdapter.AddPage;
 
   // Title
   FFPDFAdapter.Font('Arial', '', 12);
@@ -221,21 +164,6 @@ begin
   Self.SetCol(0);
 end;
 
-//var
-//  LTxt: string;
-//begin
-//  LTxt := Self.TxtGrande;
-//  FFPDFAdapter.Font('Times', '', 12);
-//  // Output text in a 6 cm width column
-//  FFPDFAdapter.Parent.MultiCell(FColWidth, 5, LTxt);
-//  FFPDFAdapter.Ln();
-//
-//  FFPDFAdapter.Font('I');
-//  FFPDFAdapter.Cell(0, 5, '(end of excerpt)');
-//  // Go back to first column
-//  Self.SetCol(0);
-//end;
-
 function TColumnsReport.TxtGrande: string;
 begin
   Result :=
@@ -257,6 +185,72 @@ begin
   Result := Result + Result + Result;
 end;
 
+procedure TColumnsReport.Gerar;
+const
+  MARGIN_RIGHT = 10;
+var
+  LMarginTotal: Double;
+begin
+  FColCurrent := 1;
+  FColNumber := 2;
+  FMarginLeft := 10;
+  FMarginBetweenCol := 4;
+  LMarginTotal := FMarginLeft + MARGIN_RIGHT; // {+ (Pred(FColNumber) * FMarginBetweenCol) } + MARGIN_RIGHT;
+
+  FFPDFAdapter := TFPDFAdapter.New
+    .OnAcceptPageBreak(AcceptPageBreak)
+    .OnHeader(PrintHeader)
+    //.OnFooter(PrintFooter)
+    ;
+
+  FColWidth := (FFPDFAdapter.Parent.GetPageWidth - LMarginTotal) / FColNumber;
+  //FColWidth := FColWidth - (Pred(FColNumber) * FMarginBetweenCol);
+  //FColWidth := Trunc(FColWidth);
+
+  FFPDFAdapter.AddPage();
+
+  //Self.AddTxtColumns;
+  Self.PreencherDados;
+  FFPDFAdapter.Ln();
+  FFPDFAdapter.Generate;
+end;
+
+function TColumnsReport.AcceptPageBreak: Boolean;
+begin
+  Result := False;
+
+  //Método que aceita ou não quebra de página automática
+  if FColCurrent < FColNumber then
+  begin
+    // Go to next column
+    Self.SetCol(Succ(FColCurrent));
+    FFPDFAdapter.Parent.SetY(Fy0);
+    //Result := False;
+  end
+  else
+  begin
+    FFPDFAdapter.AddPage;
+    Self.SetCol(1);
+    // Page break
+    //Result := True
+  end;
+end;
+
+procedure TColumnsReport.SetCol(const ACol: Integer);
+var
+  LX: Double;
+begin
+  FColCurrent := ACol;
+  //LX := (ACol * FColWidth) + FMarginLeft; //65 (FColWidth + 5)
+
+  LX := (Pred(ACol) * FColWidth) + FMarginLeft; //65 (FColWidth + 5)
+
+//  if ACol > 0 then
+//    LX := LX + FMarginBetweenCol;
+
+  FFPDFAdapter.Parent.SetLeftMargin(LX);
+  FFPDFAdapter.Parent.SetX(LX);
+end;
 
 {CONSOLE}
 begin
