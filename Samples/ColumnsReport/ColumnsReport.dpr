@@ -11,12 +11,14 @@ uses
 type
   TColumnsReport = class
   private
+    const
+      COL_HEIGHT = 4;
+  private
     FFPDFAdapter: IFPDFAdapter;
     FColNumber: Integer;
     FColWidth: Double;
     FColCurrent: Integer;
     FMarginLeft: Double;
-    FMarginBetweenCol: Double;
     Fy0: Double;
     FTotalOrc: Double;
     FTotalGeral: Double;
@@ -84,7 +86,7 @@ begin
   FFPDFAdapter
     .Ln(4)
     .BoldOn
-    .Cell(0, 5, Format('%s     %s', [TEXTO, TEXTO]), 'B');
+    .Cell(0, COL_HEIGHT, Format('%s     %s', [TEXTO, TEXTO]), 'B');
 
   FFPDFAdapter.Ln(5);
 end;
@@ -108,24 +110,31 @@ begin
   FTotalOrc := 0;
 
   FFPDFAdapter.BoldON
-    .Parent.MultiCell(94, 5, Format('%s - Cliente nome teste: %d', [FormatFloat('000000', ANumOrcamento), ANumOrcamento]), '1');
+    .Parent.MultiCell(94, COL_HEIGHT, Format('%s - Cliente nome teste: %d', [FormatFloat('000000', ANumOrcamento), ANumOrcamento]), '1'); //TRL
 end;
 
 procedure TColumnsReport.PreencherDadosOrcamentoItens(const ANumOrcamento: Integer);
 var
+  LContItens: Integer;
   LNumItem: Integer;
   LTotal: Double;
 begin
   FFPDFAdapter.BoldOFF;
-  for LNumItem := 1 to 4 do
+
+  Randomize;
+  LNumItem := Random(20);
+  if LNumItem <= 0 then
+    LNumItem := 5;
+
+  for LContItens := 1 to LNumItem do
   begin
-    LTotal := LNumItem * 10;
+    LTotal := LContItens * 10;
 
     FFPDFAdapter
-      .Cell(12, 4, Format('%s', [FormatFloat('000000', LNumItem)]), 'BLR')
-      .Cell(54, 4, Format('Teste produto orçamento %d item %d', [ANumOrcamento, LNumItem]), '1')
-      .Cell(11, 4, Format('%d', [LNumItem]), 'BLR', 0, 'R')
-      .Cell(17, 4, Format('%s', [FormatFloat(',,0.00', LTotal)]), 'BLR', 0, 'R')
+      .Cell(12, COL_HEIGHT, Format('%s', [FormatFloat('000000', LContItens)]), '1')
+      .Cell(54, COL_HEIGHT, Format('Teste produto orçamento %d item %d', [ANumOrcamento, LContItens]), '1')
+      .Cell(11, COL_HEIGHT, Format('%d', [LContItens]), '1', 0, 'R')
+      .Cell(17, COL_HEIGHT, Format('%s', [FormatFloat(',,0.00', LTotal)]), '1', 0, 'R')
       .Ln;
 
     FTotalOrc := FTotalOrc + LTotal;
@@ -137,13 +146,13 @@ end;
 procedure TColumnsReport.PreencherTotaisOrcamento;
 begin
   FFPDFAdapter.BoldOn
-    .Parent.MultiCell(94, 4, Format('%s', [FormatFloat(',,0.00', FTotalOrc)]), '1', 'R');
+    .Parent.MultiCell(94, COL_HEIGHT, Format('%s', [FormatFloat(',,0.00', FTotalOrc)]), '1', 'R');
 end;
 
 procedure TColumnsReport.PreencherTotalGeral;
 begin
   FFPDFAdapter.BoldOn
-    .Parent.MultiCell(94, 4, Format('Total geral: %s', [FormatFloat(',,0.00', FTotalGeral)]), '1', 'R');
+    .Parent.MultiCell(94, COL_HEIGHT, Format('Total geral: %s', [FormatFloat(',,0.00', FTotalGeral)]), '1', 'R');
 end;
 
 procedure TColumnsReport.Gerar;
@@ -156,8 +165,7 @@ begin
   FColCurrent := 1;
   FColNumber := 2;
   FMarginLeft := 10;
-  FMarginBetweenCol := 4;
-  LMarginTotal := FMarginLeft + MARGIN_RIGHT; // {+ (Pred(FColNumber) * FMarginBetweenCol) } + MARGIN_RIGHT;
+  LMarginTotal := FMarginLeft + MARGIN_RIGHT;
 
   FFPDFAdapter := TFPDFAdapter.New
     .OnAcceptPageBreak(AcceptPageBreak)
