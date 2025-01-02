@@ -85,6 +85,8 @@ end;
 
 function TColumnsReport.AcceptPageBreak: Boolean;
 begin
+  Result := False;
+
   // Method accepting or not automatic page break
   if FColCurrent < Pred(FColNumber) then
   begin
@@ -93,16 +95,18 @@ begin
     // Set ordinate to top
     FFPDFAdapter.Parent.SetY(Fy0);
     // Keep on page
-    Result := False;
+    //Result := False;
   end
   else
   begin
+    //**
+    FFPDFAdapter.AddPage();
+    //**
+
     // Go back to first column
     Self.SetCol(0);
     // Page break
-    Result := False;
-
-    FFPDFAdapter.AddPage();
+    //Result := True
   end;
 end;
 
@@ -199,7 +203,7 @@ begin
   // Title
   FFPDFAdapter.Font('Arial', '', 12);
   FFPDFAdapter.Parent.SetFillColor(200, 220, 255);
-  FFPDFAdapter.Cell(0, 6, 'Chapter : ', '0', 1, 'L', true);
+  FFPDFAdapter.Cell(0, 6, 'Chapter: ' + FColCurrent.ToString, '0', 1, 'L', true);
   FFPDFAdapter.Ln(4);
   // Save ordinate
   Fy0 := FFPDFAdapter.Parent.GetY();
