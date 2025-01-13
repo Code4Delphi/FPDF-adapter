@@ -184,10 +184,10 @@ function TColumnsReport.AcceptPageBreak: Boolean;
 begin
   Result := False;
 
-  //Método que aceita ou não quebra de página automática
+  //METODO QUE ACEITA OU NAO QUEBRA DE PAGINA AUTOMATICA
   if FColCurrent < FColNumber then
   begin
-    // Go to next column
+    //GO TO NEXT COLUMN
     Self.SetCol(Succ(FColCurrent));
     FFPDFAdapter.Parent.SetY(Fy0);
     //Result := False;
@@ -196,7 +196,7 @@ begin
   begin
     FFPDFAdapter.AddPage;
     Self.SetCol(1);
-    // Page break
+    // PAGE BREAK
     //Result := True
   end;
 end;
