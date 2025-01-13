@@ -48,13 +48,13 @@ begin
     .Cell(0, 13, '', 'TB')
     .Ln(1)
     .BoldOn
-    .CellLeft(135, 3, 'Solusys Sistemas')
+    .CellLeft(135, 3, 'Nome fantasia do sistemas')
     .BoldOff
     .Font(8)
     .CellRight(0, 3, Format('%s  Pág.: %s', [DateTimeToStr(Now), APDFAdapter.PageNo.ToString]))
 
     .Ln(4)
-    .CellLeft(135, 3, 'MDK Assistência, Suporte Técnico e Computadores LTDA')
+    .CellLeft(135, 3, 'Razão social da empresa logada LTDA')
     .BoldOff
     .Font(8)
     .CellRight(0, 3, 'Período: 19/12/2024 à 19/12/2024')
@@ -184,10 +184,10 @@ function TColumnsReport.AcceptPageBreak: Boolean;
 begin
   Result := False;
 
-  //Método que aceita ou não quebra de página automática
+  //METODO QUE ACEITA OU NAO QUEBRA DE PAGINA AUTOMATICA
   if FColCurrent < FColNumber then
   begin
-    // Go to next column
+    //GO TO NEXT COLUMN
     Self.SetCol(Succ(FColCurrent));
     FFPDFAdapter.Parent.SetY(Fy0);
     //Result := False;
@@ -196,7 +196,7 @@ begin
   begin
     FFPDFAdapter.AddPage;
     Self.SetCol(1);
-    // Page break
+    // PAGE BREAK
     //Result := True
   end;
 end;
