@@ -196,7 +196,7 @@ begin
   begin
     FFPDFAdapter.AddPage;
     Self.SetCol(1);
-    // PAGE BREAK
+    //PAGE BREAK
     //Result := True
   end;
 end;
